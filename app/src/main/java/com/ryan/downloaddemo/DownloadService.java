@@ -30,6 +30,7 @@ public class DownloadService extends Service {
             downloadTask = null;
             //下载成功时将前台服务通知关闭，并创建一个下载成功的通知
             stopForeground(true);
+            getNotificationManager().createNotificationChannel(channel);
             getNotificationManager().notify(1, getNotification("Download Success", -1));
             Toast.makeText(DownloadService.this, "Download Success", Toast.LENGTH_SHORT).show();
         }
@@ -58,6 +59,7 @@ public class DownloadService extends Service {
     };
 
     private DownloadBinder mBinder = new DownloadBinder();
+    private NotificationChannel channel = new NotificationChannel("id", "channel id", NotificationManager.IMPORTANCE_DEFAULT);
 
     public DownloadService() {
     }
@@ -67,9 +69,9 @@ public class DownloadService extends Service {
         return mBinder;
     }
 
-    class DownloadBinder extends Binder{
-        public void startDownload(String url){
-            if(downloadTask == null){
+    class DownloadBinder extends Binder {
+        public void startDownload(String url) {
+            if (downloadTask == null) {
                 downloadTask = null;
                 downloadTask = new DownloadTask(listener);
                 downloadTask.execute(downloadUrl);
@@ -78,22 +80,22 @@ public class DownloadService extends Service {
             }
         }
 
-        public void pauseDownload(){
-            if(downloadTask != null){
+        public void pauseDownload() {
+            if (downloadTask != null) {
                 downloadTask.cancelDownload();
             }
         }
 
-        public void cancelDownload(){
-            if(downloadTask != null){
+        public void cancelDownload() {
+            if (downloadTask != null) {
                 downloadTask.cancelDownload();
-            }else {
-                if (downloadUrl != null){
+            } else {
+                if (downloadUrl != null) {
                     //取消下载时需将文件删除，并将通知关闭
                     String fileName = downloadUrl.substring(downloadUrl.lastIndexOf("/"));
                     String directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
                     File file = new File(directory + fileName);
-                    if(file.exists()){
+                    if (file.exists()) {
                         file.delete();
                     }
                     getNotificationManager().cancel(1);
@@ -104,22 +106,21 @@ public class DownloadService extends Service {
         }
     }
 
-    private NotificationManager getNotificationManager(){
+    private NotificationManager getNotificationManager() {
         return (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
     }
 
-    private Notification getNotification(String title, int progress){
+    private Notification getNotification(String title, int progress) {
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 0, intent, 0);
-        NotificationChannel channel = new NotificationChannel("id","channel id",NotificationManager.IMPORTANCE_DEFAULT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "id");
         builder.setSmallIcon(R.mipmap.ic_launcher);
-        builder.setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher));
+        builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
         builder.setContentIntent(pi);
         builder.setContentTitle(title);
 
-        if(progress > 0){
+        if (progress > 0) {
             //当progress大于或等于0时才需显示下载进度
             builder.setContentText(progress + "%");
             builder.setProgress(100, progress, false);
